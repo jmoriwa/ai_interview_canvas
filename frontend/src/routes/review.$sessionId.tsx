@@ -7,7 +7,7 @@ import { DesignCanvas, type Viewport } from "@/components/canvas/DesignCanvas";
 import { NotesPanel } from "@/components/interview/NotesPanel";
 import { PromptPanel } from "@/components/interview/PromptPanel";
 import { ScorecardPanel } from "@/components/interview/ScorecardPanel";
-import { canvasApi, auth, sessionsApi } from "@/lib/mock-backend";
+import { canvasApi, auth, sessionsApi } from "@/lib/backend-client";
 import {
   emptyCanvasDocument,
   elapsedSeconds,

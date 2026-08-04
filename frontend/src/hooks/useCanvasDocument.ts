@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { canvasApi, openSessionChannel } from "@/lib/mock-backend";
+import { canvasApi, openSessionChannel } from "@/lib/backend-client";
 import { emptyCanvasDocument, type CanvasDocument } from "@/lib/domain";
 
 export type SaveState = "idle" | "pending" | "saved" | "error";

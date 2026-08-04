@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { LogOut, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/mock-backend";
+import { auth } from "@/lib/backend-client";
 
 export function AppHeader({ user }: { user: { displayName: string } | null }) {
   const navigate = useNavigate();

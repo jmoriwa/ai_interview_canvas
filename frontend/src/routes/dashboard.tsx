@@ -5,7 +5,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { auth, sessionsApi } from "@/lib/mock-backend";
+import { auth, sessionsApi } from "@/lib/backend-client";
 import type { InterviewSession, SessionStatus, User } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 
@@ -66,14 +66,13 @@ function DashboardPage() {
       sessions.filter((s) => {
         const matchesFilter =
           filter === "all" ||
-          (filter === "active" && (s.status === "active" || s.status === "waiting" || s.status === "paused")) ||
+          (filter === "active" &&
+            (s.status === "active" || s.status === "waiting" || s.status === "paused")) ||
           (filter === "completed" && s.status === "completed") ||
           (filter === "draft" && s.status === "draft");
         const q = query.trim().toLowerCase();
         const matchesQuery =
-          !q ||
-          s.title.toLowerCase().includes(q) ||
-          s.candidateReference.toLowerCase().includes(q);
+          !q || s.title.toLowerCase().includes(q) || s.candidateReference.toLowerCase().includes(q);
         return matchesFilter && matchesQuery;
       }),
     [sessions, filter, query],
@@ -141,7 +140,10 @@ function DashboardPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <h2 className="truncate text-base font-semibold">{s.title}</h2>
-                    <Badge variant="outline" className={cn("text-[10px] capitalize", STATUS_STYLE[s.status])}>
+                    <Badge
+                      variant="outline"
+                      className={cn("text-[10px] capitalize", STATUS_STYLE[s.status])}
+                    >
                       {s.status}
                     </Badge>
                   </div>

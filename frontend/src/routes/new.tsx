@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { auth, sessionsApi } from "@/lib/mock-backend";
+import { auth, sessionsApi } from "@/lib/backend-client";
 import { TEMPLATES, getTemplate } from "@/lib/templates";
 import type { User } from "@/lib/domain";
 import { cn } from "@/lib/utils";
@@ -166,7 +166,9 @@ function CreateInterviewPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={120}
               />
-              {errors["title"] ? <p className="text-xs text-destructive">{errors["title"]}</p> : null}
+              {errors["title"] ? (
+                <p className="text-xs text-destructive">{errors["title"]}</p>
+              ) : null}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="question">Interview prompt</Label>
@@ -276,7 +278,11 @@ function CreateInterviewPage() {
           </section>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => void navigate({ to: "/dashboard" })}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => void navigate({ to: "/dashboard" })}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={busy}>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Lock } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { notesApi } from "@/lib/mock-backend";
+import { notesApi } from "@/lib/backend-client";
 
 interface Props {
   sessionId: string;

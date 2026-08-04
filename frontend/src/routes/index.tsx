@@ -4,7 +4,8 @@ import { ArrowRight, Network, PenLine, Share2, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { auth } from "@/lib/mock-backend";
+import { auth } from "@/lib/backend-client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,8 +28,8 @@ export const Route = createFileRoute("/")({
 
 function SignInPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("demo@designinterview.dev");
-  const [password, setPassword] = useState("demo-password");
+  const [email, setEmail] = useState("alex@example.com");
+  const [password, setPassword] = useState("password123");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -39,8 +40,14 @@ function SignInPage() {
     e.preventDefault();
     if (!email.includes("@")) return;
     setBusy(true);
-    await auth.login(email);
-    void navigate({ to: "/dashboard", replace: true });
+    try {
+      await auth.login(email, password);
+      void navigate({ to: "/dashboard", replace: true });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sign in failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -64,7 +71,8 @@ function SignInPage() {
             Candidates join as guests. No account, no install.
           </Feature>
           <Feature icon={PenLine} title="Components, arrows and freehand">
-            Seventy system-design components plus pen, shapes, and sticky notes in one document model.
+            Seventy system-design components plus pen, shapes, and sticky notes in one document
+            model.
           </Feature>
           <Feature icon={Timer} title="Interview controls built in">
             Timer, canvas permissions, private notes, and a ten-dimension scorecard.
@@ -77,7 +85,7 @@ function SignInPage() {
           <div>
             <h2 className="font-display text-xl font-semibold">Interviewer sign in</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Demo mode — any email works while the backend is mocked.
+              Sign in with your interviewer account.
             </p>
           </div>
           <div className="space-y-1.5">
@@ -109,7 +117,7 @@ function SignInPage() {
             <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden />
           </Button>
           <p className="text-center text-[11px] text-muted-foreground">
-            Magic links and SSO arrive with the real backend.
+            Demo credentials are prefilled for local development.
           </p>
         </form>
       </section>

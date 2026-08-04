@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ParticipantsPanel } from "@/components/interview/ParticipantsPanel";
 import { PromptPanel } from "@/components/interview/PromptPanel";
-import { auth, openSessionChannel, participantsApi, sessionsApi } from "@/lib/mock-backend";
+import { auth, openSessionChannel, participantsApi, sessionsApi } from "@/lib/backend-client";
 import type { InterviewSession, SessionParticipant, User } from "@/lib/domain";
 
 export const Route = createFileRoute("/lobby/$sessionId")({
@@ -122,8 +122,17 @@ function LobbyPage() {
             <Label htmlFor="join-link">Candidate invitation link</Label>
             <div className="flex gap-2">
               <Input id="join-link" readOnly value={joinUrl} className="font-mono text-xs" />
-              <Button type="button" variant="outline" onClick={copy} aria-label="Copy invitation link">
-                {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={copy}
+                aria-label="Copy invitation link"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" aria-hidden />
+                ) : (
+                  <Copy className="h-4 w-4" aria-hidden />
+                )}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">

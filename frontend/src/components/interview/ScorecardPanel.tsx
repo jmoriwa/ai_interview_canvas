@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { evaluationsApi } from "@/lib/mock-backend";
+import { evaluationsApi } from "@/lib/backend-client";
 import {
   RECOMMENDATION_LABELS,
   SCORECARD_CATEGORIES,
@@ -126,7 +126,9 @@ export function ScorecardPanel({ sessionId, readOnly }: Props) {
           className="w-full"
           onClick={async () => {
             await evaluationsApi.save(sessionId, { submittedAt: new Date().toISOString() });
-            setEvaluation((prev) => (prev ? { ...prev, submittedAt: new Date().toISOString() } : prev));
+            setEvaluation((prev) =>
+              prev ? { ...prev, submittedAt: new Date().toISOString() } : prev,
+            );
             toast.success("Evaluation submitted");
           }}
         >

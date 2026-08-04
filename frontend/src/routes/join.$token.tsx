@@ -4,7 +4,7 @@ import { Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { participantsApi, sessionsApi } from "@/lib/mock-backend";
+import { participantsApi, sessionsApi } from "@/lib/backend-client";
 import type { InterviewSession } from "@/lib/domain";
 
 export const Route = createFileRoute("/join/$token")({
@@ -51,12 +51,16 @@ function JoinPage() {
     const displayName = name.trim().slice(0, 60);
     if (!session || displayName.length < 2) return;
     setBusy(true);
-    const participant = await participantsApi.join(session.id, displayName, "candidate");
+    const participant = await participantsApi.join(token, displayName, "candidate");
     window.localStorage.setItem(
       `${PARTICIPANT_KEY}.${session.id}`,
       JSON.stringify({ id: participant.id, role: participant.role, displayName }),
     );
-    void navigate({ to: "/interview/$sessionId", params: { sessionId: session.id }, replace: true });
+    void navigate({
+      to: "/interview/$sessionId",
+      params: { sessionId: session.id },
+      replace: true,
+    });
   };
 
   return (

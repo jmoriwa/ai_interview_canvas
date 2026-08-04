@@ -2,11 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Cloud, CloudOff, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
-import {
-  DesignCanvas,
-  type CanvasTool,
-  type Viewport,
-} from "@/components/canvas/DesignCanvas";
+import { DesignCanvas, type CanvasTool, type Viewport } from "@/components/canvas/DesignCanvas";
 import { CanvasToolbar } from "@/components/interview/CanvasToolbar";
 import { ComponentLibraryPanel } from "@/components/interview/ComponentLibraryPanel";
 import { NotesPanel } from "@/components/interview/NotesPanel";
@@ -18,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useCanvasDocument } from "@/hooks/useCanvasDocument";
-import { auth, openSessionChannel, participantsApi, sessionsApi } from "@/lib/mock-backend";
+import { auth, openSessionChannel, participantsApi, sessionsApi } from "@/lib/backend-client";
 import type { InterviewSession, ParticipantRole, SessionParticipant } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 
@@ -106,10 +102,10 @@ function InterviewRoom() {
   useEffect(() => {
     const id = setInterval(() => {
       void refresh();
-      if (me && !me.id.startsWith("owner_")) participantsApi.heartbeat(me.id);
+      if (me && !me.id.startsWith("owner_")) void participantsApi.heartbeat(me.id, sessionId);
     }, 5000);
     return () => clearInterval(id);
-  }, [refresh, me]);
+  }, [refresh, me, sessionId]);
 
   const isInterviewer = me?.role === "interviewer";
   const canEdit = useMemo(() => {
@@ -170,7 +166,10 @@ function InterviewRoom() {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <header className="flex flex-wrap items-center gap-3 border-b border-border bg-card px-3 py-2">
-        <Link to={isInterviewer ? "/dashboard" : "/"} className="font-display text-sm font-semibold">
+        <Link
+          to={isInterviewer ? "/dashboard" : "/"}
+          className="font-display text-sm font-semibold"
+        >
           DesignInterview
         </Link>
         <span className="truncate text-sm text-muted-foreground">{session.title}</span>
@@ -206,7 +205,9 @@ function InterviewRoom() {
                 onClick={async () => {
                   const next = await sessionsApi.setPermission(
                     session.id,
-                    session.candidateEditingEnabled ? "interviewers_only" : "candidate_and_interviewers",
+                    session.candidateEditingEnabled
+                      ? "interviewers_only"
+                      : "candidate_and_interviewers",
                   );
                   setSession(next);
                 }}
