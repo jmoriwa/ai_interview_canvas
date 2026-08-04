@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface Props {
-  disabled?: boolean;
+  disabled?: boolean | undefined;
   recent: string[];
   onUse: (def: ComponentDefinition) => void;
 }
@@ -113,7 +113,7 @@ function LibraryItem({
   onUse,
 }: {
   def: ComponentDefinition;
-  disabled?: boolean;
+  disabled?: boolean | undefined;
   onUse: (def: ComponentDefinition) => void;
 }) {
   const Icon = def.icon;
