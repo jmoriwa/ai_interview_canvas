@@ -41,7 +41,12 @@ const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const uid = (p: string) => `${p}_${Math.random().toString(36).slice(2, 9)}`;
 
 const DEFAULT_NODE_COLOR = "oklch(0.79 0.13 195)";
-const STROKE_COLORS = ["oklch(0.95 0.01 250)", "oklch(0.79 0.13 195)", "oklch(0.8 0.14 78)", "oklch(0.68 0.18 25)"];
+export const STROKE_COLORS = [
+  "oklch(0.95 0.01 250)",
+  "oklch(0.79 0.13 195)",
+  "oklch(0.8 0.14 78)",
+  "oklch(0.68 0.18 25)",
+];
 
 interface Props {
   document: CanvasDocument;
