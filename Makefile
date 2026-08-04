@@ -1,11 +1,12 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup run dev test
+.PHONY: help setup run dev test frontend
 
 help: ## Show available commands
 	@echo "Available commands:"
 	@echo "  make setup  Install backend dependencies"
 	@echo "  make run    Run the backend with auto-reload"
+	@echo "  make frontend  Run the frontend dev server"
 	@echo "  make test   Run the backend test suite"
 
 setup: ## Install backend dependencies
@@ -16,6 +17,8 @@ run: ## Run the backend development server
 
 dev: run ## Alias for make run
 
+frontend: ## Run the frontend development server
+	cd frontend && npm run dev
+
 test: ## Run backend tests
 	cd backend && uv run pytest -q
-

@@ -12,6 +12,19 @@ def test_login_logout_and_auth(client):
     assert client.post("/api/auth/logout").status_code == 204
 
 
+def test_local_frontend_cors_preflight(client):
+    response = client.options(
+        "/api/sessions",
+        headers={
+            "Origin": "http://localhost:4173",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "authorization",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:4173"
+
+
 def test_seeded_sessions_and_evaluation(client, auth):
     sessions = client.get("/api/sessions", headers=auth).json()
     assert {s["status"] for s in sessions} >= {"active", "waiting", "completed"}

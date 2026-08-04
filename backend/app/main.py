@@ -9,6 +9,7 @@ app = FastAPI(title="DesignInterview Backend API", version="1.0.0", root_path=""
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,4 +34,3 @@ def health() -> dict[str, str]:
 
 for api_router in (auth.router, sessions.router, invitations.router, participants.router, canvas.router, notes.router):
     app.include_router(api_router, prefix="/api")
-
