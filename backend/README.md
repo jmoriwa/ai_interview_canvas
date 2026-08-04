@@ -1,6 +1,6 @@
 # DesignInterview backend
 
-FastAPI implementation of the repository's `openapi.yaml`, backed by a seeded in-memory store.
+FastAPI implementation of the repository's `openapi.yaml`, backed by SQLAlchemy.
 
 ```powershell
 make setup
@@ -15,3 +15,16 @@ Joining an invitation exposes a session-scoped token in
 `X-Participant-Token`.
 
 Run tests from the repository root with `make test`.
+
+## Database configuration
+
+Set `DATABASE_URL` to any SQLAlchemy database URL supported by an installed driver.
+It defaults to a persistent SQLite database at `backend/designinterview.db`:
+
+```powershell
+$env:DATABASE_URL = "sqlite:///./local.db"
+uv run uvicorn app.main:app --reload
+```
+
+The persistence layer uses portable SQLAlchemy types and queries so another database,
+such as PostgreSQL, can be selected later by changing the URL and adding its driver.

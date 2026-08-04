@@ -1,5 +1,18 @@
 from datetime import UTC, datetime
 
+from sqlalchemy.engine import make_url
+
+from app.models import CanvasDocument
+from app.store import DATABASE_URL, DatabaseMapping, engine
+
+
+def test_database_configuration_and_persistence():
+    assert engine.url.drivername == make_url(DATABASE_URL).drivername
+    canvases = DatabaseMapping("canvases", CanvasDocument)
+    canvases["persistence-check"] = CanvasDocument(version=7, nodes=[], connectors=[], strokes=[])
+    independently_created_mapping = DatabaseMapping("canvases", CanvasDocument)
+    assert independently_created_mapping["persistence-check"].version == 7
+
 
 def test_login_logout_and_auth(client):
     assert client.get("/api/sessions").status_code == 401

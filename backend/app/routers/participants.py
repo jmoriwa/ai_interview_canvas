@@ -23,7 +23,7 @@ def remove(session_id: str, participant_id: str, user: Principal = Depends(requi
     if not participant or participant.session_id != session_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Participant not found")
     del store.participants[participant_id]
-    store.participant_tokens = {key: value for key, value in store.participant_tokens.items() if value != participant_id}
+    store.revoke_participant_tokens(participant_id)
 
 
 @router.post("/participants/{participant_id}/heartbeat", status_code=204)
@@ -34,4 +34,3 @@ def heartbeat(participant_id: str, principal: Principal = Depends(require_partic
     if principal.id != participant_id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Credential does not belong to this participant")
     store.participants[participant_id] = participant.model_copy(update={"connected": True, "last_seen_at": utcnow()})
-
