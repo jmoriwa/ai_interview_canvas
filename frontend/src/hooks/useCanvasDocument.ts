@@ -5,7 +5,8 @@ import { emptyCanvasDocument, type CanvasDocument } from "@/lib/domain";
 export type SaveState = "idle" | "pending" | "saved" | "error";
 
 const MAX_HISTORY = 60;
-const SYNC_INTERVAL_MS = 1500;
+const SAVE_DEBOUNCE_MS = 100;
+const SYNC_INTERVAL_MS = 250;
 
 function mergeCollection<T extends { id: string }>(base: T[], local: T[], remote: T[]) {
   const baseById = new Map(base.map((item) => [item.id, item]));
@@ -114,14 +115,16 @@ export function useCanvasDocument(sessionId: string) {
         }
         setSaveState("error");
       }
-    }, 700);
+    }, SAVE_DEBOUNCE_MS);
   }, [sessionId]);
 
   const apply = useCallback(
     (next: CanvasDocument, options?: { commit?: boolean }) => {
       const commit = options?.commit ?? true;
+      // Drag/resize frames use commit=false until pointer-up. They are still
+      // local changes and must be protected from an incoming poll.
+      hasLocalChanges.current = true;
       if (commit) {
-        hasLocalChanges.current = true;
         editRevision.current += 1;
       }
       setDoc((prev) => {
