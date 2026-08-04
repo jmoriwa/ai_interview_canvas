@@ -3,9 +3,8 @@
 FastAPI implementation of the repository's `openapi.yaml`, backed by a seeded in-memory store.
 
 ```powershell
-cd backend
-uv sync
-uv run uvicorn app.main:app --reload
+make setup
+make run
 ```
 
 The API is available under `/api`. Seed interviewer credentials are
@@ -15,5 +14,4 @@ same opaque credential in the `X-Access-Token` header for bearer clients.
 Joining an invitation exposes a session-scoped token in
 `X-Participant-Token`.
 
-Run tests with `uv run pytest`.
-
+Run tests from the repository root with `make test`.
