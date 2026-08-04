@@ -1,0 +1,630 @@
+openapi: 3.1.0
+info:
+  title: DesignInterview Backend API
+  version: 1.0.0
+  description: |
+    HTTP API expected by the frontend API facade in
+    `frontend/src/lib/mock-backend.ts`. Realtime document, presence, session,
+    and timer messages are transported over the session WebSocket and are
+    therefore outside OpenAPI's HTTP operation model.
+servers:
+  - url: /api
+
+tags:
+  - name: Authentication
+  - name: Sessions
+  - name: Invitations
+  - name: Participants
+  - name: Canvas
+  - name: Notes
+  - name: Evaluations
+
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Logged in; the server also establishes the session cookie.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      operationId: logout
+      security: [{ cookieAuth: [] }]
+      responses:
+        '204': { description: Logged out; no response body. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /sessions:
+    get:
+      tags: [Sessions]
+      operationId: listSessions
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Sessions visible to the current interviewer.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/InterviewSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Sessions]
+      operationId: createSession
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateSessionRequest' }
+      responses:
+        '201':
+          description: Created session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InterviewSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /sessions/{sessionId}:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      tags: [Sessions]
+      operationId: getSession
+      security: [{ cookieAuth: [] }, { participantAuth: [] }]
+      responses:
+        '200':
+          description: Session state.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InterviewSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Sessions]
+      operationId: updateSession
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateSessionRequest' }
+      responses:
+        '200':
+          description: Updated session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InterviewSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /sessions/{sessionId}/start:
+    post: &sessionTransition
+      tags: [Sessions]
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Session after the requested transition.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InterviewSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+  /sessions/{sessionId}/pause:
+    post: *sessionTransition
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+  /sessions/{sessionId}/resume:
+    post: *sessionTransition
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+  /sessions/{sessionId}/complete:
+    post: *sessionTransition
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+  /sessions/{sessionId}/cancel:
+    post: *sessionTransition
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+
+  /sessions/{sessionId}/timer:
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+    post:
+      tags: [Sessions]
+      operationId: commandTimer
+      description: HTTP equivalent of the frontend's `timer.command` realtime action.
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TimerCommandRequest' }
+      responses:
+        '200':
+          description: Session containing authoritative timer state.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InterviewSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /sessions/{sessionId}/follow-ups/reveal:
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+    post:
+      tags: [Sessions]
+      operationId: revealFollowUp
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Session with the next follow-up revealed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InterviewSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /invitations/{token}:
+    parameters: [{ $ref: '#/components/parameters/InvitationToken' }]
+    get:
+      tags: [Invitations]
+      operationId: resolveInvitation
+      security: []
+      responses:
+        '200':
+          description: Session associated with a valid invitation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InterviewSession' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '410': { $ref: '#/components/responses/Gone' }
+  /invitations/{token}/join:
+    parameters: [{ $ref: '#/components/parameters/InvitationToken' }]
+    post:
+      tags: [Invitations]
+      operationId: joinInvitation
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/JoinInvitationRequest' }
+      responses:
+        '201':
+          description: Joined participant. A participant credential is also established or returned out of band to the API client.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionParticipant' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '410': { $ref: '#/components/responses/Gone' }
+
+  /sessions/{sessionId}/participants:
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+    get:
+      tags: [Participants]
+      operationId: listParticipants
+      security: [{ cookieAuth: [] }, { participantAuth: [] }]
+      responses:
+        '200':
+          description: Session participants.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SessionParticipant' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /sessions/{sessionId}/participants/{participantId}:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+      - $ref: '#/components/parameters/ParticipantId'
+    delete:
+      tags: [Participants]
+      operationId: removeParticipant
+      security: [{ cookieAuth: [] }]
+      responses:
+        '204': { description: Participant removed; no response body. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /participants/{participantId}/heartbeat:
+    parameters: [{ $ref: '#/components/parameters/ParticipantId' }]
+    post:
+      tags: [Participants]
+      operationId: participantHeartbeat
+      security: [{ participantAuth: [] }]
+      responses:
+        '204': { description: Presence refreshed; no response body. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /sessions/{sessionId}/canvas:
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+    get:
+      tags: [Canvas]
+      operationId: getCanvas
+      security: [{ cookieAuth: [] }, { participantAuth: [] }]
+      responses:
+        '200':
+          description: Current canvas document.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CanvasDocument' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Canvas]
+      operationId: saveCanvas
+      description: HTTP equivalent of saving the whole document; realtime implementations may use `document.update` instead.
+      security: [{ cookieAuth: [] }, { participantAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CanvasDocument' }
+      responses:
+        '200':
+          description: Saved document with its server-assigned version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CanvasDocument' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /sessions/{sessionId}/notes:
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+    get:
+      tags: [Notes]
+      operationId: getNotes
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Private interviewer note, including an empty note when none has been saved.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InterviewerNote' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Notes]
+      operationId: saveNotes
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SaveNoteRequest' }
+      responses:
+        '200':
+          description: Saved private note.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InterviewerNote' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /sessions/{sessionId}/evaluation:
+    parameters: [{ $ref: '#/components/parameters/SessionId' }]
+    get:
+      tags: [Evaluations]
+      operationId: getEvaluation
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Evaluation, including an empty evaluation when none has been saved.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Evaluation' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Evaluations]
+      operationId: saveEvaluation
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateEvaluationRequest' }
+      responses:
+        '200':
+          description: Saved evaluation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Evaluation' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: designinterview_session
+      description: Authenticated interviewer session established by login.
+    participantAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque participant token
+      description: Session-scoped credential established when a guest joins an invitation.
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema: { type: string }
+    ParticipantId:
+      name: participantId
+      in: path
+      required: true
+      schema: { type: string }
+    InvitationToken:
+      name: token
+      in: path
+      required: true
+      schema: { type: string }
+  responses:
+    BadRequest:
+      description: Invalid request.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: Authentication is required or invalid.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: The caller lacks permission for this session operation.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Resource not found.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Gone:
+      description: Invitation expired or session is no longer available.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: State or document-version conflict.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+  schemas:
+    Error:
+      type: object
+      additionalProperties: false
+      required: [message]
+      properties:
+        message: { type: string }
+        code: { type: string }
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    User:
+      type: object
+      additionalProperties: false
+      required: [id, email, displayName]
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        displayName: { type: string }
+    InterviewPrompt:
+      type: object
+      additionalProperties: false
+      required: [title, question, requirements, constraints, followUps, revealedFollowUps]
+      properties:
+        title: { type: string }
+        question: { type: string }
+        requirements: { type: array, items: { type: string } }
+        constraints: { type: array, items: { type: string } }
+        followUps: { type: array, items: { type: string } }
+        revealedFollowUps: { type: integer, minimum: 0 }
+    InterviewSession:
+      type: object
+      additionalProperties: false
+      required: [id, ownerUserId, title, prompt, candidateReference, status, durationSeconds, timerStartedAt, timerAccumulatedSeconds, candidateEditingEnabled, observerEditingEnabled, canvasPermission, templateId, invitationToken, startedAt, completedAt, expiresAt, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        ownerUserId: { type: string }
+        title: { type: string }
+        prompt: { $ref: '#/components/schemas/InterviewPrompt' }
+        candidateReference: { type: string }
+        status: { $ref: '#/components/schemas/SessionStatus' }
+        durationSeconds: { type: [integer, 'null'], minimum: 0 }
+        timerStartedAt: { type: [string, 'null'], format: date-time }
+        timerAccumulatedSeconds: { type: integer, minimum: 0 }
+        candidateEditingEnabled: { type: boolean }
+        observerEditingEnabled: { type: boolean }
+        canvasPermission: { $ref: '#/components/schemas/CanvasPermission' }
+        templateId: { type: string }
+        invitationToken: { type: string }
+        startedAt: { type: [string, 'null'], format: date-time }
+        completedAt: { type: [string, 'null'], format: date-time }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    SessionStatus:
+      type: string
+      enum: [draft, waiting, active, paused, completed, expired, cancelled]
+    CanvasPermission:
+      type: string
+      enum: [everyone, candidate_and_interviewers, interviewers_only, owner_only]
+    CreateSessionRequest:
+      type: object
+      additionalProperties: false
+      required: [title, prompt, candidateReference, durationSeconds, candidateEditingEnabled, observerEditingEnabled, expiresInHours, templateId]
+      properties:
+        title: { type: string, minLength: 3, maxLength: 120 }
+        prompt: { $ref: '#/components/schemas/InterviewPrompt' }
+        candidateReference: { type: string, maxLength: 120 }
+        durationSeconds: { type: [integer, 'null'], minimum: 0 }
+        candidateEditingEnabled: { type: boolean }
+        observerEditingEnabled: { type: boolean }
+        expiresInHours: { type: integer, minimum: 1 }
+        templateId: { type: string }
+    UpdateSessionRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title: { type: string }
+        prompt: { $ref: '#/components/schemas/InterviewPrompt' }
+        candidateReference: { type: string }
+        durationSeconds: { type: [integer, 'null'], minimum: 0 }
+        candidateEditingEnabled: { type: boolean }
+        observerEditingEnabled: { type: boolean }
+        canvasPermission: { $ref: '#/components/schemas/CanvasPermission' }
+    TimerCommandRequest:
+      type: object
+      additionalProperties: false
+      required: [command]
+      properties:
+        command: { type: string, enum: [start, pause, reset, add_time] }
+        seconds: { type: integer, minimum: 1, default: 300 }
+    JoinInvitationRequest:
+      type: object
+      additionalProperties: false
+      required: [displayName, role]
+      properties:
+        displayName: { type: string, minLength: 2, maxLength: 60 }
+        role: { $ref: '#/components/schemas/ParticipantRole' }
+    ParticipantRole:
+      type: string
+      enum: [interviewer, candidate, observer]
+    SessionParticipant:
+      type: object
+      additionalProperties: false
+      required: [id, sessionId, displayName, role, presenceColor, connected, joinedAt, lastSeenAt]
+      properties:
+        id: { type: string }
+        sessionId: { type: string }
+        displayName: { type: string }
+        role: { $ref: '#/components/schemas/ParticipantRole' }
+        presenceColor: { type: string }
+        connected: { type: boolean }
+        joinedAt: { type: string, format: date-time }
+        lastSeenAt: { type: string, format: date-time }
+    CanvasDocument:
+      type: object
+      additionalProperties: false
+      required: [version, nodes, connectors, strokes]
+      properties:
+        version: { type: integer, minimum: 0 }
+        nodes: { type: array, items: { $ref: '#/components/schemas/CanvasNode' } }
+        connectors: { type: array, items: { $ref: '#/components/schemas/CanvasConnector' } }
+        strokes: { type: array, items: { $ref: '#/components/schemas/CanvasStroke' } }
+    CanvasNode:
+      type: object
+      additionalProperties: false
+      required: [id, kind, componentType, label, x, y, width, height, color]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [component, text, note, shape] }
+        componentType: { type: string }
+        label: { type: string }
+        description: { type: string }
+        x: { type: number }
+        y: { type: number }
+        width: { type: number }
+        height: { type: number }
+        color: { type: string }
+        locked: { type: boolean }
+        shape: { type: string, enum: [rectangle, ellipse, diamond] }
+    CanvasConnector:
+      type: object
+      additionalProperties: false
+      required: [id, fromNodeId, toNodeId, label, style, direction, color]
+      properties:
+        id: { type: string }
+        fromNodeId: { type: string }
+        toNodeId: { type: string }
+        label: { type: string }
+        style: { type: string, enum: [solid, dashed, dotted] }
+        direction: { type: string, enum: [forward, none, both] }
+        color: { type: string }
+    CanvasStroke:
+      type: object
+      additionalProperties: false
+      required: [id, points, color, width, tool]
+      properties:
+        id: { type: string }
+        points: { type: array, items: { type: number } }
+        color: { type: string }
+        width: { type: number, minimum: 0 }
+        tool: { type: string, enum: [pen, highlighter] }
+    InterviewerNote:
+      type: object
+      additionalProperties: false
+      required: [sessionId, content, updatedAt]
+      properties:
+        sessionId: { type: string }
+        content: { type: string }
+        updatedAt: { type: string, format: date-time }
+    SaveNoteRequest:
+      type: object
+      additionalProperties: false
+      required: [content]
+      properties:
+        content: { type: string }
+    ScorecardCategory:
+      type: string
+      enum: [Requirements clarification, High-level architecture, Data modeling, API design, Scalability, Reliability, Performance, Security, Trade-off analysis, Communication]
+    Recommendation:
+      type: string
+      enum: [strong_hire, hire, mixed, no_hire, strong_no_hire, not_evaluated]
+    Ratings:
+      type: object
+      propertyNames: { $ref: '#/components/schemas/ScorecardCategory' }
+      additionalProperties: { type: integer, minimum: 1, maximum: 5 }
+    EvaluationComments:
+      type: object
+      propertyNames: { $ref: '#/components/schemas/ScorecardCategory' }
+      additionalProperties: { type: string }
+    Evaluation:
+      type: object
+      additionalProperties: false
+      required: [sessionId, ratings, comments, overallRecommendation, submittedAt, updatedAt]
+      properties:
+        sessionId: { type: string }
+        ratings: { $ref: '#/components/schemas/Ratings' }
+        comments: { $ref: '#/components/schemas/EvaluationComments' }
+        overallRecommendation: { $ref: '#/components/schemas/Recommendation' }
+        submittedAt: { type: [string, 'null'], format: date-time }
+        updatedAt: { type: string, format: date-time }
+    UpdateEvaluationRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        ratings: { $ref: '#/components/schemas/Ratings' }
+        comments: { $ref: '#/components/schemas/EvaluationComments' }
+        overallRecommendation: { $ref: '#/components/schemas/Recommendation' }
+        submittedAt: { type: [string, 'null'], format: date-time }
