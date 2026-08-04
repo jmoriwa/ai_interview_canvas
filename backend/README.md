@@ -16,6 +16,13 @@ Joining an invitation exposes a session-scoped token in
 
 Run tests from the repository root with `make test`.
 
+Integration tests live in `tests_integration/`. They launch the API in a separate
+process and use a temporary SQLite database:
+
+```powershell
+uv run pytest tests_integration -q
+```
+
 ## Database configuration
 
 Set `DATABASE_URL` to any SQLAlchemy database URL supported by an installed driver.

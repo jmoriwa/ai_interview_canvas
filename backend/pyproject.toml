@@ -17,5 +17,5 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "tests_integration"]
 pythonpath = ["."]

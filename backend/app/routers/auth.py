@@ -1,10 +1,26 @@
+from uuid import uuid4
+
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Response, status
 
-from ..auth import Principal, require_user, token_digest, verify_password
-from ..models import LoginRequest, User
+from ..auth import Principal, hash_password, require_user, token_digest, verify_password
+from ..models import LoginRequest, SignupRequest, StoredUser, User
 from ..store import store
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+@router.post("/signup", response_model=User, status_code=201)
+def signup(body: SignupRequest) -> User:
+    if any(user.email.lower() == body.email.lower() for user in store.users.values()):
+        raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists")
+    user = StoredUser(
+        id=f"user-{uuid4().hex[:12]}",
+        email=body.email,
+        displayName=body.display_name,
+        password_hash=hash_password(body.password),
+    )
+    store.users[user.id] = user
+    return User(id=user.id, email=user.email, displayName=user.display_name)
 
 
 @router.post("/login", response_model=User)

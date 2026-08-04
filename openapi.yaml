@@ -20,6 +20,24 @@ tags:
   - name: Evaluations
 
 paths:
+  /auth/signup:
+    post:
+      tags: [Authentication]
+      operationId: signup
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SignupRequest' }
+      responses:
+        '201':
+          description: Account created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /auth/login:
     post:
       tags: [Authentication]
@@ -428,6 +446,14 @@ components:
       properties:
         email: { type: string, format: email }
         password: { type: string, format: password }
+    SignupRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password, displayName]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 8 }
+        displayName: { type: string, minLength: 2, maxLength: 60 }
     User:
       type: object
       additionalProperties: false

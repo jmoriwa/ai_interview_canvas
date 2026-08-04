@@ -14,6 +14,12 @@ class LoginRequest(StrictModel):
     password: str
 
 
+class SignupRequest(StrictModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
+    display_name: str = Field(alias="displayName", min_length=2, max_length=60)
+
+
 class User(StrictModel):
     id: str
     email: EmailStr
