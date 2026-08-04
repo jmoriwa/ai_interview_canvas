@@ -14,6 +14,12 @@ const AUTH_KEY = "designinterview.auth.v1";
 const ACCESS_TOKEN_KEY = "designinterview.access-token.v1";
 const PARTICIPANT_TOKEN_PREFIX = "designinterview.participant-token";
 
+function clearUserAuth() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(AUTH_KEY);
+  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -34,8 +40,9 @@ function getParticipantToken(sessionId?: string) {
 
 async function request<T>(path: string, options: RequestInit = {}, sessionId?: string): Promise<T> {
   const headers = new Headers(options.headers);
+  const participantCredential = getParticipantToken(sessionId);
   const token =
-    getParticipantToken(sessionId) ??
+    participantCredential ??
     (typeof window === "undefined" ? null : window.localStorage.getItem(ACCESS_TOKEN_KEY));
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
@@ -45,6 +52,7 @@ async function request<T>(path: string, options: RequestInit = {}, sessionId?: s
     credentials: "include",
   });
   if (!response.ok) {
+    if (response.status === 401 && !participantCredential) clearUserAuth();
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
     throw new ApiError(body?.message ?? `Request failed (${response.status})`, response.status);
   }
@@ -56,7 +64,11 @@ export const auth = {
   currentUser(): User | null {
     if (typeof window === "undefined") return null;
     const raw = window.localStorage.getItem(AUTH_KEY);
-    if (!raw) return null;
+    const token = window.localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!raw || !token) {
+      clearUserAuth();
+      return null;
+    }
     try {
       return JSON.parse(raw) as User;
     } catch {
@@ -83,9 +95,11 @@ export const auth = {
   async logout() {
     try {
       await request<void>("/auth/logout", { method: "POST" });
+    } catch {
+      // Logging out is idempotent from the browser's perspective. An expired
+      // or unreachable backend should not prevent clearing local credentials.
     } finally {
-      window.localStorage.removeItem(AUTH_KEY);
-      window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+      clearUserAuth();
     }
   },
 };

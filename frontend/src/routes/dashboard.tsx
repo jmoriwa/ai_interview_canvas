@@ -55,10 +55,11 @@ function DashboardPage() {
       return;
     }
     setUser(current);
-    void sessionsApi.list().then((list) => {
-      setSessions(list);
-      setLoading(false);
-    });
+    void sessionsApi
+      .list()
+      .then(setSessions)
+      .catch(() => navigate({ to: "/", replace: true }))
+      .finally(() => setLoading(false));
   }, [navigate]);
 
   const filtered = useMemo(
