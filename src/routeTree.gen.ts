@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as NewRouteImport } from './routes/new'
+import { Route as LobbySessionIdRouteImport } from './routes/lobby.$sessionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const NewRoute = NewRouteImport.update({
   path: '/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LobbySessionIdRoute = LobbySessionIdRouteImport.update({
+  id: '/lobby/$sessionId',
+  path: '/lobby/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/new': typeof NewRoute
+  '/lobby/$sessionId': typeof LobbySessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/new': typeof NewRoute
+  '/lobby/$sessionId': typeof LobbySessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/new': typeof NewRoute
+  '/lobby/$sessionId': typeof LobbySessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/new'
+  fullPaths: '/' | '/dashboard' | '/new' | '/lobby/$sessionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/new'
-  id: '__root__' | '/' | '/dashboard' | '/new'
+  to: '/' | '/dashboard' | '/new' | '/lobby/$sessionId'
+  id: '__root__' | '/' | '/dashboard' | '/new' | '/lobby/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   NewRoute: typeof NewRoute
+  LobbySessionIdRoute: typeof LobbySessionIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lobby/$sessionId': {
+      id: '/lobby/$sessionId'
+      path: '/lobby/$sessionId'
+      fullPath: '/lobby/$sessionId'
+      preLoaderRoute: typeof LobbySessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   NewRoute: NewRoute,
+  LobbySessionIdRoute: LobbySessionIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
