@@ -106,7 +106,7 @@ export function ScorecardPanel({ sessionId, readOnly }: Props) {
         <Select
           value={evaluation.overallRecommendation}
           onValueChange={(v) => patch({ overallRecommendation: v as Recommendation })}
-          disabled={readOnly}
+          disabled={readOnly ?? false}
         >
           <SelectTrigger aria-label="Overall recommendation">
             <SelectValue />
