@@ -15,6 +15,7 @@ import { Route as NewRouteImport } from './routes/new'
 import { Route as InterviewSessionIdRouteImport } from './routes/interview.$sessionId'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as LobbySessionIdRouteImport } from './routes/lobby.$sessionId'
+import { Route as ReviewSessionIdRouteImport } from './routes/review.$sessionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const LobbySessionIdRoute = LobbySessionIdRouteImport.update({
   path: '/lobby/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReviewSessionIdRoute = ReviewSessionIdRouteImport.update({
+  id: '/review/$sessionId',
+  path: '/review/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/interview/$sessionId': typeof InterviewSessionIdRoute
   '/join/$token': typeof JoinTokenRoute
   '/lobby/$sessionId': typeof LobbySessionIdRoute
+  '/review/$sessionId': typeof ReviewSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/interview/$sessionId': typeof InterviewSessionIdRoute
   '/join/$token': typeof JoinTokenRoute
   '/lobby/$sessionId': typeof LobbySessionIdRoute
+  '/review/$sessionId': typeof ReviewSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/interview/$sessionId': typeof InterviewSessionIdRoute
   '/join/$token': typeof JoinTokenRoute
   '/lobby/$sessionId': typeof LobbySessionIdRoute
+  '/review/$sessionId': typeof ReviewSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/interview/$sessionId'
     | '/join/$token'
     | '/lobby/$sessionId'
+    | '/review/$sessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/interview/$sessionId'
     | '/join/$token'
     | '/lobby/$sessionId'
+    | '/review/$sessionId'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/interview/$sessionId'
     | '/join/$token'
     | '/lobby/$sessionId'
+    | '/review/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   InterviewSessionIdRoute: typeof InterviewSessionIdRoute
   JoinTokenRoute: typeof JoinTokenRoute
   LobbySessionIdRoute: typeof LobbySessionIdRoute
+  ReviewSessionIdRoute: typeof ReviewSessionIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LobbySessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/review/$sessionId': {
+      id: '/review/$sessionId'
+      path: '/review/$sessionId'
+      fullPath: '/review/$sessionId'
+      preLoaderRoute: typeof ReviewSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   InterviewSessionIdRoute: InterviewSessionIdRoute,
   JoinTokenRoute: JoinTokenRoute,
   LobbySessionIdRoute: LobbySessionIdRoute,
+  ReviewSessionIdRoute: ReviewSessionIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
