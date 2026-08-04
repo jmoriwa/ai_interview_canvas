@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as NewRouteImport } from './routes/new'
+import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as LobbySessionIdRouteImport } from './routes/lobby.$sessionId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const NewRoute = NewRouteImport.update({
   path: '/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JoinTokenRoute = JoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LobbySessionIdRoute = LobbySessionIdRouteImport.update({
   id: '/lobby/$sessionId',
   path: '/lobby/$sessionId',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/new': typeof NewRoute
+  '/join/$token': typeof JoinTokenRoute
   '/lobby/$sessionId': typeof LobbySessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/new': typeof NewRoute
+  '/join/$token': typeof JoinTokenRoute
   '/lobby/$sessionId': typeof LobbySessionIdRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,28 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/new': typeof NewRoute
+  '/join/$token': typeof JoinTokenRoute
   '/lobby/$sessionId': typeof LobbySessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/new' | '/lobby/$sessionId'
+  fullPaths: '/' | '/dashboard' | '/new' | '/join/$token' | '/lobby/$sessionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/new' | '/lobby/$sessionId'
-  id: '__root__' | '/' | '/dashboard' | '/new' | '/lobby/$sessionId'
+  to: '/' | '/dashboard' | '/new' | '/join/$token' | '/lobby/$sessionId'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/new'
+    | '/join/$token'
+    | '/lobby/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   NewRoute: typeof NewRoute
+  JoinTokenRoute: typeof JoinTokenRoute
   LobbySessionIdRoute: typeof LobbySessionIdRoute
 }
 
@@ -92,6 +108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/join/$token': {
+      id: '/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof JoinTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lobby/$sessionId': {
       id: '/lobby/$sessionId'
       path: '/lobby/$sessionId'
@@ -106,6 +129,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   NewRoute: NewRoute,
+  JoinTokenRoute: JoinTokenRoute,
   LobbySessionIdRoute: LobbySessionIdRoute,
 }
 export const routeTree = rootRouteImport
