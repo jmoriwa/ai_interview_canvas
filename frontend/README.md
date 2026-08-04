@@ -1,22 +1,71 @@
-# DesignInterview Frontend
+# DesignInterview
 
-This project was built with [Lovable](https://lovable.dev).
+DesignInterview is a collaborative workspace built specifically for conducting system-design interviews.
 
-The product requirements and technical specification are maintained in [`../docs/spec.md`](../docs/spec.md).
+It gives candidates a structured canvas for explaining architecture decisions while giving interviewers the tools they need to manage the session, document observations, and evaluate the final design—all in one place.
 
-## Build with Lovable
+> This project is under active development. The current repository contains the application frontend, backend API, automated tests, and deployment configuration for the initial MVP.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/ba3979cb-193e-453e-9325-0b12d7f0eb5c).
+## Why I Built This
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+System-design interviews are often conducted using generic whiteboards that were not designed for technical evaluation. Interviewers must switch between diagramming tools, timers, notes, candidate prompts, and evaluation forms, while candidates spend valuable time searching for appropriate shapes or working around an unfamiliar interface.
 
-## Development
+DesignInterview explores what a purpose-built alternative could look like.
 
-You need Node.js and npm. [Install Node.js with nvm](https://github.com/nvm-sh/nvm#installing-and-updating), then run:
+The application is intended to make system-design interviews more focused by combining:
 
-```sh
-npm install
-npm run dev
-```
+- Architecture-oriented diagramming components
+- Interview prompts and session controls
+- Candidate invitation links
+- Timers and participant management
+- Private interviewer notes
+- Structured evaluation scorecards
+- Persistent interview records
+
+The goal is to reduce administrative friction without limiting the candidate’s ability to communicate ideas freely.
+
+## Who It Is For
+
+### Interviewers
+
+Interviewers can create sessions, share invitation links, present design prompts, control the interview timer, manage permissions, take private notes, and complete an evaluation after the session.
+
+### Candidates
+
+Candidates can join through a shared link and use a system-design-focused canvas to create components, connect services, annotate decisions, and communicate architectural trade-offs.
+
+### Hiring Teams
+
+Hiring teams can use a more consistent interview format and retain a reviewable record of the candidate’s final design and interviewer feedback.
+
+## Core Capabilities
+
+The MVP is designed around the complete system-design interview workflow:
+
+- Interviewer dashboard and session creation
+- Shareable candidate invitation links
+- Guest candidate join flow
+- System-design component library
+- Interactive architecture canvas
+- Connectors, labels, text, and free-form drawing
+- Interview prompt panel
+- Synchronized session timer
+- Participant and permission controls
+- Private interviewer notes
+- Structured evaluation scorecard
+- Completed-session review
+- Canvas persistence and export
+- Reconnection and session recovery
+
+## Technical Overview
+
+DesignInterview is organized as a full-stack application with separate frontend and backend packages.
+
+```text
+ai_interview_canvas/
+├── frontend/          # React and TanStack application
+├── backend/           # FastAPI application and tests
+├── docs/spec.md       # Product requirements and technical specification
+├── openapi.yaml       # API contract
+├── Dockerfile         # Production container build
+└── Makefile           # Common development commands
