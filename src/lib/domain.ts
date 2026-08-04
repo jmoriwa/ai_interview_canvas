@@ -86,7 +86,7 @@ export interface CanvasNode {
   height: number;
   color: string;
   locked?: boolean;
-  shape?: "rectangle" | "ellipse" | "diamond";
+  shape?: "rectangle" | "ellipse" | "diamond" | undefined;
 }
 
 export type ConnectorStyle = "solid" | "dashed" | "dotted";
