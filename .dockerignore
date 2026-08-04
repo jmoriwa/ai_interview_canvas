@@ -1,0 +1,10 @@
+.git
+.pytest_cache
+.uv-cache
+**/__pycache__
+**/.pytest_cache
+**/.venv
+**/node_modules
+frontend/.output
+backend/*.db
+backend/*.db-journal

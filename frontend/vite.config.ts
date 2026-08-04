@@ -7,6 +7,8 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  // The Docker image only needs browser assets; other deployments retain Nitro.
+  nitro: process.env.STATIC_BUILD === "true" ? false : undefined,
   vite: {
     server: {
       proxy: {
@@ -21,5 +23,10 @@ export default defineConfig({
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+    // Emit an HTML shell that the Python backend can use as an SPA fallback.
+    spa: {
+      enabled: true,
+      prerender: { outputPath: "/index.html" },
+    },
   },
 });
