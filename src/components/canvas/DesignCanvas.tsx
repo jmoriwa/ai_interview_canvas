@@ -48,18 +48,18 @@ interface Props {
   onChange: (next: CanvasDocument, options?: { commit?: boolean }) => void;
   tool: CanvasTool;
   onToolChange: (tool: CanvasTool) => void;
-  readOnly?: boolean;
-  showGrid?: boolean;
-  snapToGrid?: boolean;
-  strokeColor?: string;
-  strokeWidth?: number;
-  cursors?: RemoteCursor[];
-  onPointerMoveDoc?: (x: number, y: number) => void;
+  readOnly?: boolean | undefined;
+  showGrid?: boolean | undefined;
+  snapToGrid?: boolean | undefined;
+  strokeColor?: string | undefined;
+  strokeWidth?: number | undefined;
+  cursors?: RemoteCursor[] | undefined;
+  onPointerMoveDoc?: ((x: number, y: number) => void) | undefined;
   viewport: Viewport;
   onViewportChange: (v: Viewport) => void;
   selection: string[];
   onSelectionChange: (ids: string[]) => void;
-  className?: string;
+  className?: string | undefined;
 }
 
 export function centerOfNode(n: CanvasNode) {
