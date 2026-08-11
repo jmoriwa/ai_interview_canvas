@@ -31,6 +31,15 @@ Use a Docker named volume to keep the SQLite database when the container is stop
 docker run --name ai-interview-canvas-local -p 8000:8000 -e DATABASE_URL=sqlite:////app/data/designinterview.db -v ai-interview-canvas-data:/app/data ai-interview-canvas:local
 ```
 
+Docker requires container names to be unique. If `ai-interview-canvas-local` already exists, stop and remove that container before running the command again:
+
+```sh
+docker stop ai-interview-canvas-local
+docker rm ai-interview-canvas-local
+```
+
+These commands remove only the container. Data stored in the `ai-interview-canvas-data` volume remains available to the replacement container.
+
 Open <http://localhost:8000> in a browser. The backend health endpoint is available at <http://localhost:8000/health>.
 
 The `ai-interview-canvas-data` volume stores the application's database outside the container. Reuse the same volume name each time you run a replacement container to retain users, sessions, canvases, notes, and evaluations. Removing the container with `docker rm` does not remove this named volume.
