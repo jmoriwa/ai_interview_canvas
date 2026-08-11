@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sdip
+      POSTGRES_PASSWORD: sdip
+      POSTGRES_DB: sdip
+    ports:
+      - "5432:5432"
+    volumes:
+      - interview-canvas-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sdip -d sdip"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  interview-canvas-pgdata:

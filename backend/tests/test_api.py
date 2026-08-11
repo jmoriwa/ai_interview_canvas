@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy.engine import make_url
 
 from app.models import CanvasDocument
-from app.store import DATABASE_URL, DatabaseMapping, engine
+from app.store import DATABASE_URL, DatabaseMapping, _database_url, engine
 
 
 def test_database_configuration_and_persistence():
@@ -12,6 +12,14 @@ def test_database_configuration_and_persistence():
     canvases["persistence-check"] = CanvasDocument(version=7, nodes=[], connectors=[], strokes=[])
     independently_created_mapping = DatabaseMapping("canvases", CanvasDocument)
     assert independently_created_mapping["persistence-check"].version == 7
+
+
+def test_postgres_urls_select_psycopg(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://sdip:sdip@localhost:5432/sdip")
+    assert _database_url() == "postgresql+psycopg://sdip:sdip@localhost:5432/sdip"
+
+    monkeypatch.setenv("DATABASE_URL", "postgres://sdip:sdip@localhost:5432/sdip")
+    assert _database_url() == "postgresql+psycopg://sdip:sdip@localhost:5432/sdip"
 
 
 def test_login_logout_and_auth(client):
