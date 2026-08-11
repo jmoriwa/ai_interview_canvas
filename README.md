@@ -25,11 +25,17 @@ The first build downloads the Node, Python, and application dependencies, so it 
 
 ## Run the container
 
+Use a Docker named volume to keep the SQLite database when the container is stopped, removed, or replaced:
+
 ```sh
-docker run --name ai-interview-canvas-local -p 8000:8000 ai-interview-canvas:local
+docker run --name ai-interview-canvas-local -p 8000:8000 -e DATABASE_URL=sqlite:////app/data/designinterview.db -v ai-interview-canvas-data:/app/data ai-interview-canvas:local
 ```
 
 Open <http://localhost:8000> in a browser. The backend health endpoint is available at <http://localhost:8000/health>.
+
+The `ai-interview-canvas-data` volume stores the application's database outside the container. Reuse the same volume name each time you run a replacement container to retain users, sessions, canvases, notes, and evaluations. Removing the container with `docker rm` does not remove this named volume.
+
+The final argument is the image name (`ai-interview-canvas:local`). A build context such as `.` is accepted by `docker build`, but it cannot be used as the image argument to `docker run`.
 
 The command runs in the foreground so logs remain visible. Press `Ctrl+C` to stop it, then remove the stopped container with:
 
@@ -40,7 +46,7 @@ docker rm ai-interview-canvas-local
 To run in the background instead:
 
 ```sh
-docker run -d --name ai-interview-canvas-local -p 8000:8000 ai-interview-canvas:local
+docker run -d --name ai-interview-canvas-local -p 8000:8000 -e DATABASE_URL=sqlite:////app/data/designinterview.db -v ai-interview-canvas-data:/app/data ai-interview-canvas:local
 docker logs -f ai-interview-canvas-local
 ```
 
@@ -59,7 +65,13 @@ The source is copied into the image, so rebuild and recreate the container after
 docker stop ai-interview-canvas-local
 docker rm ai-interview-canvas-local
 docker build -t ai-interview-canvas:local .
-docker run -d --name ai-interview-canvas-local -p 8000:8000 ai-interview-canvas:local
+docker run -d --name ai-interview-canvas-local -p 8000:8000 -e DATABASE_URL=sqlite:////app/data/designinterview.db -v ai-interview-canvas-data:/app/data ai-interview-canvas:local
 ```
 
 If port `8000` is already in use, map a different host port, for example `-p 8080:8000`, and open <http://localhost:8080>.
+
+To intentionally erase all persisted application data, first remove the container and then remove its named volume:
+
+```sh
+docker volume rm ai-interview-canvas-data
+```
