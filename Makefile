@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup run dev test integration-test frontend
+.PHONY: help setup run dev test integration-test e2e-test frontend
 
 help: ## Show available commands
 	@echo "Available commands:"
@@ -9,6 +9,7 @@ help: ## Show available commands
 	@echo "  make frontend  Run the frontend dev server"
 	@echo "  make test   Run the backend test suite"
 	@echo "  make integration-test  Run tests against docker-compose.yaml"
+	@echo "  make e2e-test  Run Playwright end-to-end tests against docker-compose.yaml"
 
 setup: ## Install backend dependencies
 	cd backend && uv sync
@@ -26,3 +27,6 @@ test: ## Run backend tests
 
 integration-test: ## Build docker-compose.yaml and run API/PostgreSQL integration tests
 	cd backend && uv run pytest tests_integration -q -m compose --run-compose
+
+e2e-test: ## Build docker-compose.yaml and run the browser collaboration flow
+	cd e2e && npm test

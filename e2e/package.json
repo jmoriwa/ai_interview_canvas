@@ -1,0 +1,13 @@
+{
+  "name": "ai-interview-canvas-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^22.16.5"
+  }
+}
+
