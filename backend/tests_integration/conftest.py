@@ -1,13 +1,24 @@
 import os
+import shutil
 import socket
 import subprocess
-import sys
 import time
 from collections.abc import Iterator
+from dataclasses import dataclass
 from pathlib import Path
+from uuid import uuid4
 
 import httpx
 import pytest
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--run-compose",
+        action="store_true",
+        default=False,
+        help="build docker-compose.yaml and run Compose integration tests",
+    )
 
 
 def _available_port() -> int:
@@ -16,43 +27,83 @@ def _available_port() -> int:
         return sock.getsockname()[1]
 
 
-@pytest.fixture(scope="session")
-def api_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
-    database_path = tmp_path_factory.mktemp("integration-db") / "test.db"
-    port = _available_port()
-    url = f"http://127.0.0.1:{port}"
-    environment = os.environ.copy()
-    environment["DATABASE_URL"] = f"sqlite:///{database_path.as_posix()}"
-    backend_root = Path(__file__).resolve().parents[1]
-    process = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port)],
-        cwd=backend_root,
-        env=environment,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
-    try:
-        deadline = time.monotonic() + 15
+@dataclass
+class ComposeStack:
+    root: Path
+    project: str
+    environment: dict[str, str]
+    api_url: str
+    command: tuple[str, ...]
+
+    def compose(self, *arguments: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [*self.command, "-f", "docker-compose.yaml", "-p", self.project, *arguments],
+            cwd=self.root,
+            env=self.environment,
+            check=check,
+            capture_output=True,
+            text=True,
+        )
+
+    def wait_until_healthy(self, timeout: float = 30) -> None:
+        deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            if process.poll() is not None:
-                output = process.stdout.read() if process.stdout else ""
-                pytest.fail(f"Integration server exited during startup:\n{output}")
             try:
-                if httpx.get(f"{url}/health", timeout=0.25).status_code == 200:
-                    break
+                response = httpx.get(f"{self.api_url}/health", timeout=0.5)
+                if response.status_code == 200:
+                    return
             except httpx.HTTPError:
-                time.sleep(0.1)
-        else:
-            pytest.fail("Integration server did not become healthy within 15 seconds")
-        yield url
+                pass
+            time.sleep(0.2)
+        logs = self.compose("logs", "app", check=False).stdout
+        pytest.fail(f"Compose API did not become healthy within {timeout:g} seconds:\n{logs}")
+
+    def restart_app(self) -> None:
+        self.compose("restart", "app")
+        self.wait_until_healthy()
+
+
+@pytest.fixture(scope="session")
+def compose_stack(request: pytest.FixtureRequest) -> Iterator[ComposeStack]:
+    if not request.config.getoption("--run-compose"):
+        pytest.skip("pass --run-compose to run Docker Compose integration tests")
+
+    root = Path(__file__).resolve().parents[2]
+    compose_command = ("docker", "compose")
+    compose_probe = subprocess.run(
+        [*compose_command, "version"], capture_output=True, text=True, check=False
+    )
+    if compose_probe.returncode != 0:
+        legacy_compose = shutil.which("docker-compose")
+        if not legacy_compose:
+            pytest.fail("Docker Compose is required (docker compose or docker-compose)")
+        compose_command = (legacy_compose,)
+    environment = os.environ.copy()
+    environment["APP_PORT"] = str(_available_port())
+    environment["POSTGRES_PORT"] = str(_available_port())
+    project = f"interview-canvas-test-{uuid4().hex[:10]}"
+    stack = ComposeStack(
+        root,
+        project,
+        environment,
+        f"http://127.0.0.1:{environment['APP_PORT']}",
+        compose_command,
+    )
+
+    try:
+        stack.compose("up", "--build", "--detach", "--wait")
+        stack.wait_until_healthy()
+        yield stack
+    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+        output = getattr(exc, "stderr", "") or str(exc)
+        pytest.fail(f"Could not start docker-compose.yaml:\n{output}")
     finally:
-        process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=5)
+        stack.compose("down", "--volumes", "--remove-orphans", check=False)
+
+
+@pytest.fixture(scope="session")
+def api_url(compose_stack: ComposeStack) -> str:
+    return compose_stack.api_url
 
 
 @pytest.fixture

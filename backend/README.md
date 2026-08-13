@@ -16,11 +16,12 @@ Joining an invitation exposes a session-scoped token in
 
 Run tests from the repository root with `make test`.
 
-Integration tests live in `tests_integration/`. They launch the API in a separate
-process and use a temporary SQLite database:
+Integration tests live in `tests_integration/`. They build and launch the complete
+`docker-compose.yaml` stack on available host ports, exercise the API against
+PostgreSQL, and remove their isolated Compose project and volume afterward:
 
 ```powershell
-uv run pytest tests_integration -q
+make integration-test
 ```
 
 ## Database configuration

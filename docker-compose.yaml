@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: sdip
       POSTGRES_DB: sdip
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - interview-canvas-pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -21,7 +21,7 @@ services:
     environment:
       DATABASE_URL: postgresql://sdip:sdip@postgres:5432/sdip
     ports:
-      - "8000:8000"
+      - "${APP_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
