@@ -79,9 +79,10 @@ def compose_stack(request: pytest.FixtureRequest) -> Iterator[ComposeStack]:
             pytest.fail("Docker Compose is required (docker compose or docker-compose)")
         compose_command = (legacy_compose,)
     environment = os.environ.copy()
-    environment["APP_PORT"] = str(_available_port())
-    environment["POSTGRES_PORT"] = str(_available_port())
-    project = f"interview-canvas-test-{uuid4().hex[:10]}"
+    reuse_stack = environment.get("TEST_COMPOSE_REUSE") == "1"
+    environment["APP_PORT"] = environment.get("APP_PORT", str(_available_port()))
+    environment["POSTGRES_PORT"] = environment.get("POSTGRES_PORT", str(_available_port()))
+    project = environment.get("COMPOSE_PROJECT_NAME", f"interview-canvas-test-{uuid4().hex[:10]}")
     stack = ComposeStack(
         root,
         project,
@@ -91,14 +92,16 @@ def compose_stack(request: pytest.FixtureRequest) -> Iterator[ComposeStack]:
     )
 
     try:
-        stack.compose("up", "--build", "--detach", "--wait")
+        if not reuse_stack:
+            stack.compose("up", "--build", "--detach", "--wait")
         stack.wait_until_healthy()
         yield stack
     except (FileNotFoundError, subprocess.CalledProcessError) as exc:
         output = getattr(exc, "stderr", "") or str(exc)
         pytest.fail(f"Could not start docker-compose.yaml:\n{output}")
     finally:
-        stack.compose("down", "--volumes", "--remove-orphans", check=False)
+        if not reuse_stack:
+            stack.compose("down", "--volumes", "--remove-orphans", check=False)
 
 
 @pytest.fixture(scope="session")
