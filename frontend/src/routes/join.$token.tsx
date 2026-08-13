@@ -50,17 +50,23 @@ function JoinPage() {
     e.preventDefault();
     const displayName = name.trim().slice(0, 60);
     if (!session || displayName.length < 2) return;
+    setError(null);
     setBusy(true);
-    const participant = await participantsApi.join(token, displayName, "candidate");
-    window.localStorage.setItem(
-      `${PARTICIPANT_KEY}.${session.id}`,
-      JSON.stringify({ id: participant.id, role: participant.role, displayName }),
-    );
-    void navigate({
-      to: "/interview/$sessionId",
-      params: { sessionId: session.id },
-      replace: true,
-    });
+    try {
+      const participant = await participantsApi.join(token, displayName, "candidate");
+      window.localStorage.setItem(
+        `${PARTICIPANT_KEY}.${session.id}`,
+        JSON.stringify({ id: participant.id, role: participant.role, displayName }),
+      );
+      await navigate({
+        to: "/interview/$sessionId",
+        params: { sessionId: session.id },
+        replace: true,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not join the interview. Please try again.");
+      setBusy(false);
+    }
   };
 
   return (
@@ -71,7 +77,7 @@ function JoinPage() {
           <span className="font-display text-sm font-semibold">DesignInterview</span>
         </div>
 
-        {error ? (
+        {error && !session ? (
           <div className="mt-6">
             <h1 className="text-lg font-semibold">{error}</h1>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -105,6 +111,11 @@ function JoinPage() {
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Joining…" : "Join interview"}
             </Button>
+            {error ? (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
             <p className="text-center text-[11px] text-muted-foreground">
               Works best on a laptop with a mouse or trackpad.
             </p>

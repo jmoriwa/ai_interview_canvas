@@ -8,7 +8,9 @@ async function signInAsInterviewer(page: Page) {
   await expect(page).toHaveURL(/\/dashboard$/);
 }
 
-test("candidate canvas changes are synchronized to the interviewer", async ({ browser }) => {
+test("candidate canvas changes are synchronized to the interviewer", async ({
+  browser,
+}) => {
   const interviewer = await browser.newContext();
   const candidate = await browser.newContext();
   const interviewerPage = await interviewer.newPage();
@@ -16,13 +18,22 @@ test("candidate canvas changes are synchronized to the interviewer", async ({ br
   const interviewTitle = `Collaborative interview ${Date.now()}`;
 
   await signInAsInterviewer(interviewerPage);
-  await interviewerPage.getByRole("main").getByRole("link", { name: "New interview" }).click();
+  await interviewerPage
+    .getByRole("main")
+    .getByRole("link", { name: "New interview" })
+    .click();
   await interviewerPage.getByLabel("Interview title").fill(interviewTitle);
-  await interviewerPage.getByLabel("Candidate name or reference").fill("Playwright Candidate");
-  await interviewerPage.getByRole("button", { name: "Create interview" }).click();
+  await interviewerPage
+    .getByLabel("Candidate name or reference")
+    .fill("Playwright Candidate");
+  await interviewerPage
+    .getByRole("button", { name: "Create interview" })
+    .click();
   await expect(interviewerPage).toHaveURL(/\/lobby\//);
 
-  const joinLink = await interviewerPage.getByLabel("Candidate invitation link").inputValue();
+  const joinLink = await interviewerPage
+    .getByLabel("Candidate invitation link")
+    .inputValue();
   expect(joinLink).toMatch(/\/join\//);
 
   await candidatePage.goto(joinLink);
@@ -30,7 +41,9 @@ test("candidate canvas changes are synchronized to the interviewer", async ({ br
   await candidatePage.getByRole("button", { name: "Join interview" }).click();
   await expect(candidatePage).toHaveURL(/\/interview\//);
 
-  await interviewerPage.getByRole("link", { name: "Enter interview room" }).click();
+  await interviewerPage
+    .getByRole("link", { name: "Enter interview room" })
+    .click();
   await expect(interviewerPage).toHaveURL(/\/interview\//);
 
   await candidatePage.getByLabel("Search components").fill("Message queue");
@@ -44,5 +57,57 @@ test("candidate canvas changes are synchronized to the interviewer", async ({ br
   ).toBeVisible({ timeout: 10_000 });
 
   await candidate.close();
+  await interviewer.close();
+});
+
+test("a rejected candidate join displays the API error instead of staying busy", async ({
+  browser,
+}) => {
+  const interviewer = await browser.newContext();
+  const firstCandidate = await browser.newContext();
+  const secondCandidate = await browser.newContext();
+  const interviewerPage = await interviewer.newPage();
+  const firstCandidatePage = await firstCandidate.newPage();
+  const secondCandidatePage = await secondCandidate.newPage();
+
+  await signInAsInterviewer(interviewerPage);
+  await interviewerPage
+    .getByRole("main")
+    .getByRole("link", { name: "New interview" })
+    .click();
+  await interviewerPage
+    .getByLabel("Interview title")
+    .fill(`Join handling ${Date.now()}`);
+  await interviewerPage
+    .getByLabel("Candidate name or reference")
+    .fill("Candidate");
+  await interviewerPage
+    .getByRole("button", { name: "Create interview" })
+    .click();
+  const joinLink = await interviewerPage
+    .getByLabel("Candidate invitation link")
+    .inputValue();
+
+  await firstCandidatePage.goto(joinLink);
+  await firstCandidatePage.getByLabel("Display name").fill("First Candidate");
+  await firstCandidatePage
+    .getByRole("button", { name: "Join interview" })
+    .click();
+  await expect(firstCandidatePage).toHaveURL(/\/interview\//);
+
+  await secondCandidatePage.goto(joinLink);
+  await secondCandidatePage.getByLabel("Display name").fill("Second Candidate");
+  await secondCandidatePage
+    .getByRole("button", { name: "Join interview" })
+    .click();
+  await expect(secondCandidatePage.getByRole("alert")).toHaveText(
+    "This session already has a candidate",
+  );
+  await expect(
+    secondCandidatePage.getByRole("button", { name: "Join interview" }),
+  ).toBeEnabled();
+
+  await secondCandidate.close();
+  await firstCandidate.close();
   await interviewer.close();
 });
