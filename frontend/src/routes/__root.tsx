@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 function NotFoundComponent() {
   return (
@@ -115,9 +116,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'try{var t=localStorage.getItem("designinterview.theme");if(t==="light"){document.documentElement.classList.remove("dark");document.documentElement.style.colorScheme="light"}else{document.documentElement.style.colorScheme="dark"}}catch(e){}',
+          }}
+        />
       </head>
       <body>
         {children}
@@ -133,8 +140,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider delayDuration={300}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <ThemeToggle />
         <Toaster position="bottom-right" />
       </TooltipProvider>
     </QueryClientProvider>

@@ -74,7 +74,52 @@
   --font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  /* Blueprint dark: graphite surfaces, cyan signal, amber attention */
+  /* Blueprint light: paper surfaces with the same cyan and amber signals. */
+  --background: oklch(0.98 0.006 240);
+  --foreground: oklch(0.22 0.025 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.025 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.025 250);
+  --primary: oklch(0.5 0.12 205);
+  --primary-foreground: oklch(0.99 0.005 210);
+  --secondary: oklch(0.94 0.012 245);
+  --secondary-foreground: oklch(0.26 0.025 250);
+  --muted: oklch(0.94 0.012 245);
+  --muted-foreground: oklch(0.5 0.025 250);
+  --accent: oklch(0.76 0.14 78);
+  --accent-foreground: oklch(0.22 0.03 70);
+  --destructive: oklch(0.58 0.2 22);
+  --destructive-foreground: oklch(0.99 0.005 250);
+  --border: oklch(0.87 0.018 245);
+  --input: oklch(0.87 0.018 245);
+  --ring: oklch(0.5 0.12 205);
+  --success: oklch(0.55 0.15 155);
+  --success-foreground: oklch(0.99 0.005 155);
+  --canvas: oklch(0.965 0.008 245);
+  --canvas-grid: oklch(0.87 0.015 245);
+  --chart-1: oklch(0.79 0.13 195);
+  --chart-2: oklch(0.8 0.14 78);
+  --chart-3: oklch(0.72 0.15 155);
+  --chart-4: oklch(0.7 0.16 300);
+  --chart-5: oklch(0.68 0.18 25);
+  --sidebar: oklch(0.97 0.008 245);
+  --sidebar-foreground: oklch(0.24 0.025 250);
+  --sidebar-primary: oklch(0.5 0.12 205);
+  --sidebar-primary-foreground: oklch(0.99 0.005 210);
+  --sidebar-accent: oklch(0.92 0.018 245);
+  --sidebar-accent-foreground: oklch(0.22 0.025 250);
+  --sidebar-border: oklch(0.86 0.018 245);
+  --sidebar-ring: oklch(0.5 0.12 205);
+  --shadow-panel: 0 1px 0 0 oklch(1 0 0 / 80%) inset, 0 18px 40px -28px oklch(0.2 0.03 250 / 25%);
+  --gradient-hero: radial-gradient(
+    120% 120% at 15% 0%,
+    oklch(0.9 0.045 210) 0%,
+    oklch(0.98 0.006 240) 55%
+  );
+}
+
+.dark {
   --background: oklch(0.19 0.018 250);
   --foreground: oklch(0.95 0.008 250);
   --card: oklch(0.23 0.02 252);
@@ -98,11 +143,6 @@
   --success-foreground: oklch(0.2 0.03 240);
   --canvas: oklch(0.21 0.018 250);
   --canvas-grid: oklch(0.29 0.02 250);
-  --chart-1: oklch(0.79 0.13 195);
-  --chart-2: oklch(0.8 0.14 78);
-  --chart-3: oklch(0.72 0.15 155);
-  --chart-4: oklch(0.7 0.16 300);
-  --chart-5: oklch(0.68 0.18 25);
   --sidebar: oklch(0.215 0.018 251);
   --sidebar-foreground: oklch(0.93 0.008 250);
   --sidebar-primary: oklch(0.79 0.13 195);
@@ -117,41 +157,6 @@
     oklch(0.32 0.06 210) 0%,
     oklch(0.19 0.018 250) 55%
   );
-}
-
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
 @layer base {
