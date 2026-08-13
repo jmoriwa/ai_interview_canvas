@@ -75,7 +75,7 @@ jobs:
         run: uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 &
       - name: Start frontend
         working-directory: frontend
-        run: npm run dev -- --host 127.0.0.1 &
+        run: npm run dev -- --host 127.0.0.1 --port 5173 &
       - name: Wait for application
         run: |
           curl --fail --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:8000/health
