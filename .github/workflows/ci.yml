@@ -112,7 +112,7 @@ jobs:
       - run: npx playwright install --with-deps chrome
         working-directory: e2e
       - name: Build and start Compose stack
-        run: docker compose up --build --detach --wait
+        run: docker compose -f docker-compose.yaml up --build --detach --wait
       - name: Run integration tests
         working-directory: backend
         env:
@@ -135,7 +135,7 @@ jobs:
           if-no-files-found: ignore
       - name: Show Compose logs
         if: failure()
-        run: docker compose logs --no-color
+        run: docker compose -f docker-compose.yaml logs --no-color
       - name: Stop Compose stack
         if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: docker compose -f docker-compose.yaml down --volumes --remove-orphans
