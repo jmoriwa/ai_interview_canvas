@@ -8,6 +8,46 @@ The application also supports interview-focused workflows such as a session time
 
 The project consists of a TypeScript frontend and a Python FastAPI backend. Its multi-stage Docker build compiles the frontend and serves it together with the API from one container on port `8000`.
 
+## Render environments
+
+The root [`render.yaml`](render.yaml) defines two independent stacks:
+
+| Environment | Render web service | Database | Deployment policy |
+| --- | --- | --- | --- |
+| Production | `ai-interview-canvas` | `ai-interview-canvas-production` | Manual only |
+| Development | `ai-interview-canvas-dev` | `ai-interview-canvas-development` | `main`, after GitHub CI passes |
+
+Keeping the production service name as `ai-interview-canvas` preserves its
+<https://ai-interview-canvas.onrender.com> address. The dev service receives its
+own `onrender.com` address from Render. Both services build the same Dockerfile,
+but run on separate compute and receive different `DATABASE_URL` values.
+
+### One-time Render setup
+
+1. In the Render Dashboard, select the existing `ai-interview-canvas` service
+   and use **Generate Blueprint** to confirm that its service name is exactly
+   `ai-interview-canvas` and that it is not already managed by another Blueprint.
+2. Create a Blueprint for this repository using `render.yaml`. Review the plan
+   before applying it: Render should adopt `ai-interview-canvas` and create the
+   dev web service plus the two Postgres databases. Do not accept a generated
+   suffix on the production web service, because that would create a new URL
+   instead of adopting the existing service.
+3. In the production service settings, confirm **Auto-Deploy** is **Off**. In the
+   dev service settings, confirm the branch is `main` and **Auto-Deploy** is
+   **After CI Checks Pass**.
+4. Open the dev service after its first deploy and record its generated URL for
+   the team. From then on, pushes to `main` run GitHub Actions and only a passing
+   commit is automatically deployed to dev.
+
+Production releases are intentional manual deploys from the
+`ai-interview-canvas` Render service. Use **Manual Deploy > Deploy a specific
+commit** after the chosen commit has passed CI and has been verified in dev.
+
+> Important: attaching `ai-interview-canvas-production` changes production to a
+> new, empty Postgres database. If the current service has data that must be
+> retained, export and migrate it before applying the Blueprint. Do not point
+> production at the development database, even temporarily.
+
 ## Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or another running Docker Engine)
