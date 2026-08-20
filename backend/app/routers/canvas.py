@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from ..app_metrics import record_canvas_additions
 from ..auth import Principal, require_principal
 from ..dependencies import authorize, get_session
 from ..models import CanvasDocument, ParticipantRole
@@ -41,5 +42,5 @@ def save_canvas(session_id: str, body: CanvasDocument, principal: Principal = De
         raise HTTPException(status.HTTP_409_CONFLICT, "Canvas version conflict")
     saved = body.model_copy(update={"version": current.version + 1})
     store.canvases[session_id] = saved
+    record_canvas_additions(session_id, current, saved)
     return saved
-

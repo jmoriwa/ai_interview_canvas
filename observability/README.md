@@ -23,6 +23,15 @@ Open Grafana at <http://localhost:3001>. Anonymous local access is enabled and
 Prometheus, Loki, and Tempo are provisioned as data sources. Prometheus is also
 available at <http://localhost:9090>.
 
+The provisioned **AI Interview Canvas / Interview Activity** dashboard tracks:
+
+- current interview rooms (with a separate creation counter for rate queries);
+- participants whose heartbeat was received in the last 60 seconds;
+- canvas nodes, connectors, and strokes created, plus current element totals.
+
+Application metrics export every five seconds and Grafana refreshes every five
+seconds, so allow roughly 10 seconds for an action to appear.
+
 Stop the stack without deleting its data:
 
 ```powershell

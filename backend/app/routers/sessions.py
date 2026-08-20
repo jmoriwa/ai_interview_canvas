@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from ..app_metrics import record_room_created
 from ..auth import Principal, require_principal, require_user
 from ..dependencies import authorize, get_session
 from ..models import CanvasDocument, CreateSessionRequest, InterviewSession, SessionStatus, TimerCommandRequest, UpdateSessionRequest
@@ -30,6 +31,7 @@ def create_session(body: CreateSessionRequest, user: Principal = Depends(require
     )
     store.sessions[sid] = session
     store.canvases[sid] = CanvasDocument(version=0, nodes=[], connectors=[], strokes=[])
+    record_room_created()
     return session
 
 

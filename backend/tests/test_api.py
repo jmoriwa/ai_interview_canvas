@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.engine import make_url
 
+from app import app_metrics
 from app.models import CanvasDocument
 from app.observability import telemetry_resource
 from app.store import DATABASE_URL, DatabaseMapping, _database_url, engine
@@ -17,6 +18,35 @@ def test_telemetry_resource_contains_deployment_identity(monkeypatch):
     assert attributes["service.name"] == "interview-api"
     assert attributes["deployment.environment.name"] == "staging"
     assert attributes["service.version"] == "abc123"
+
+
+def test_canvas_metrics_count_only_new_elements(monkeypatch):
+    recorded = []
+
+    class Counter:
+        def add(self, value, attributes):
+            recorded.append((value, attributes))
+
+    monkeypatch.setattr(app_metrics, "canvas_elements_created", Counter())
+    previous = CanvasDocument(version=1, nodes=[], connectors=[], strokes=[])
+    current = CanvasDocument.model_validate(
+        {
+            "version": 1,
+            "nodes": [
+                {
+                    "id": "node-1", "kind": "text", "componentType": "",
+                    "label": "API", "x": 0, "y": 0, "width": 100,
+                    "height": 40, "color": "#fff",
+                }
+            ],
+            "connectors": [],
+            "strokes": [],
+        }
+    )
+
+    app_metrics.record_canvas_additions("room-1", previous, current)
+
+    assert recorded == [(1, {"room.id": "room-1", "element.type": "node"})]
 
 
 def test_database_configuration_and_persistence():
