@@ -10,39 +10,42 @@ The project consists of a TypeScript frontend and a Python FastAPI backend. Its 
 
 ## Render environments
 
-Production and development are independent, but only development is managed by
-the root [`render.yaml`](render.yaml):
+Production and development are configured manually as two independent Render
+web services connected to this repository. This project does not use a Render
+Blueprint or Render-managed databases.
 
 | Environment | Render web service | Database | Deployment policy |
 | --- | --- | --- | --- |
-| Production | `ai-interview-canvas` | Existing external Neon production project | Existing service remains unmanaged |
-| Development | `ai-interview-canvas-dev` | External Neon development project | `main`, after GitHub CI passes |
+| Production | `ai-interview-canvas` | External Neon production project | Manual deploys only |
+| Development | `ai-interview-canvas-dev` | External Neon development project | Automatic from `main`, after GitHub CI passes |
 
-The existing production service and its
-<https://ai-interview-canvas.onrender.com> address are intentionally excluded
-from the Blueprint, so syncing it cannot alter production. The Blueprint creates
-only the Free dev web service, which receives its own `onrender.com` address.
-Each service uses a different external Neon `DATABASE_URL`.
+Both services build the root `Dockerfile`, but run on separate Render compute.
+Each service has its own secret `DATABASE_URL` pointing to a different Neon
+project. Never copy either environment's database connection string into the
+other service.
 
-### One-time Render setup
+### Render configuration
 
-1. Create a Blueprint for this repository using `render.yaml`. Its proposed
-   changes must contain only `ai-interview-canvas-dev`. Cancel if the existing
-   `ai-interview-canvas` production service appears anywhere in the plan.
-2. When prompted for `DATABASE_URL`, enter the pooled connection string from the
-   external Neon development project. Never enter the production connection
-   string here.
-3. Confirm the dev service uses the Free instance type, branch `main`, and
-   **Auto-Deploy: After CI Checks Pass**.
-4. Open the dev service after its first deploy and record its generated URL for
-   the team. From then on, pushes to `main` run GitHub Actions and only a passing
-   commit is automatically deployed to dev.
+The production service at <https://ai-interview-canvas.onrender.com> must have
+**Auto-Deploy: Off** and retain its production Neon `DATABASE_URL`.
 
-Production releases remain intentional manual deploys from the existing,
-unmanaged `ai-interview-canvas` Render service. Use **Manual Deploy > Deploy a
-specific commit** after the chosen commit has passed CI and has been verified in
-dev. Do not add production to this Blueprint or reuse either environment's Neon
-connection string in the other environment.
+The development service must use:
+
+- Repository: `jmoriwa/ai_interview_canvas`
+- Branch: `main`
+- Runtime: Docker with `./Dockerfile`
+- Instance type: Free
+- Health check path: `/health`
+- `APP_ENV`: `development`
+- `DATABASE_URL`: pooled connection string for the development Neon project
+- Auto-Deploy: After CI Checks Pass
+
+Normal pushes to `main` run GitHub Actions and deploy only to development after
+all checks pass.
+
+Production releases are intentional manual deploys from `ai-interview-canvas`.
+Use **Manual Deploy > Deploy a specific commit** after the chosen commit has
+passed CI and has been verified at the dev URL.
 
 ## Prerequisites
 
