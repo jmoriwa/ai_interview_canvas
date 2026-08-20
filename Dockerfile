@@ -8,7 +8,9 @@ RUN STATIC_BUILD=true npm run build
 
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS runtime
 
+ARG GIT_COMMIT=unknown
 ENV PATH="/app/.venv/bin:$PATH" \
+    GIT_COMMIT=$GIT_COMMIT \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \

@@ -3,7 +3,20 @@ from datetime import UTC, datetime
 from sqlalchemy.engine import make_url
 
 from app.models import CanvasDocument
+from app.observability import telemetry_resource
 from app.store import DATABASE_URL, DatabaseMapping, _database_url, engine
+
+
+def test_telemetry_resource_contains_deployment_identity(monkeypatch):
+    monkeypatch.setenv("OTEL_SERVICE_NAME", "interview-api")
+    monkeypatch.setenv("DEPLOYMENT_ENVIRONMENT", "staging")
+    monkeypatch.setenv("GIT_COMMIT", "abc123")
+
+    attributes = telemetry_resource().attributes
+
+    assert attributes["service.name"] == "interview-api"
+    assert attributes["deployment.environment.name"] == "staging"
+    assert attributes["service.version"] == "abc123"
 
 
 def test_database_configuration_and_persistence():

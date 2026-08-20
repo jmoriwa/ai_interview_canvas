@@ -8,9 +8,11 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from .observability import configure_telemetry
 from .routers import auth, canvas, invitations, notes, participants, sessions
 
 app = FastAPI(title="DesignInterview Backend API", version="1.0.0", root_path="")
+configure_telemetry(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173"],
