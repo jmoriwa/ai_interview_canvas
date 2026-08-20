@@ -81,6 +81,12 @@ These commands remove only the container. Data stored in the `ai-interview-canva
 
 Open <http://localhost:8000> in a browser. The backend health endpoint is available at <http://localhost:8000/health>.
 
+## Local observability
+
+The optional stack in `observability/` receives OTLP telemetry and provides
+Prometheus, Loki, Tempo, and Grafana. See
+[`observability/README.md`](observability/README.md) for startup instructions.
+
 The `ai-interview-canvas-data` volume stores the application's database outside the container. Reuse the same volume name each time you run a replacement container to retain users, sessions, canvases, notes, and evaluations. Removing the container with `docker rm` does not remove this named volume.
 
 The final argument is the image name (`ai-interview-canvas:local`). A build context such as `.` is accepted by `docker build`, but it cannot be used as the image argument to `docker run`.
