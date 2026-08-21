@@ -1,131 +1,192 @@
+<div align="center">
+
 # AI Interview Canvas
 
-AI Interview Canvas (also called DesignInterview) is a browser-based collaborative workspace for conducting system-design interviews. An interviewer can create a session, provide an interview prompt, and invite candidates or observers with a shareable link. Participants use a shared canvas to build and discuss an architecture with reusable system-design components, connections, labels, and free-form drawing.
+### A purpose-built collaborative workspace for system design interviews
 
-The application also supports interview-focused workflows such as a session timer, participant management, private interviewer notes, evaluation scorecards, saved sessions, and post-interview review. Candidates can focus on the prompt and canvas while interviewer-only notes and evaluation content remain private.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://ai-interview-canvas.onrender.com)
+[![CI](https://img.shields.io/github/actions/workflow/status/jmoriwa/ai_interview_canvas/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/jmoriwa/ai_interview_canvas/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](backend/pyproject.toml)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](frontend/package.json)
 
-## How it is built
+[Explore the live application](https://ai-interview-canvas.onrender.com) · [API contract](openapi.yaml) · [Product specification](docs/spec.md)
 
-The project consists of a TypeScript frontend and a Python FastAPI backend. Its multi-stage Docker build compiles the frontend and serves it together with the API from one container on port `8000`.
+</div>
 
-## Render environments
+---
 
-Production and development are configured manually as two independent Render
-web services connected to this repository. This project does not use a Render
-Blueprint or Render-managed databases.
+AI Interview Canvas—branded **DesignInterview** in the UI—replaces the patchwork of generic whiteboards, timers, notes, and evaluation forms used during system design interviews. An interviewer creates a structured session, shares a single invitation link, and collaborates with a candidate on an architecture canvas while private feedback remains isolated.
 
-| Environment | Render web service | Database | Deployment policy |
+This is a production-deployed full-stack application, not a static prototype: it includes authenticated workflows, role-aware APIs, persistent PostgreSQL data, concurrent canvas synchronization, end-to-end browser tests, CI-gated deployments, and OpenTelemetry observability.
+
+> **Try it:** open the [live deployment](https://ai-interview-canvas.onrender.com) and sign in with `alex@example.com` / `password123`. The free Render instance may need a short cold start.
+
+## What it does
+
+- **Interview lifecycle** — create, start, pause, complete, cancel, revisit, and filter interview sessions.
+- **Candidate invitations** — share a session-scoped link; candidates join in a separate browser without an account or installation.
+- **Architecture canvas** — place searchable system components, connect and label services, draw freehand, add notes and shapes, zoom, pan, undo, and redo.
+- **Concurrent collaboration** — versioned documents autosave and synchronize every 250 ms; optimistic conflicts are merged and retried safely.
+- **Interview controls** — use a server-authoritative timer, reveal follow-up questions progressively, manage participants, and lock candidate editing.
+- **Private evaluation** — interviewer notes and a ten-dimension scorecard are stored behind role-aware endpoints and excluded from the candidate experience.
+- **Persistent review** — retain the final diagram, observations, scores, and hiring recommendation for post-interview review.
+- **Accessible presentation** — responsive layouts, keyboard-aware controls, semantic labels, and persistent light/dark themes.
+
+## Engineering highlights
+
+| Area | Implementation |
+| --- | --- |
+| Frontend | React 19, TypeScript, TanStack Router/Query, Vite, Tailwind CSS, Radix UI |
+| Canvas | Custom React canvas workspace with components, connectors, strokes, viewport controls, and 60-step undo/redo history |
+| Backend | FastAPI, Pydantic, SQLAlchemy 2, Argon2 password hashing, REST API defined in OpenAPI |
+| Data | PostgreSQL in deployed/Compose environments; SQLite fallback for lightweight local development |
+| Collaboration | Debounced optimistic writes, version checks, three-way collection merging, participant heartbeats, and role-based edit permissions |
+| Observability | OpenTelemetry traces and metrics via OTLP; local Prometheus, Loki, Tempo, and Grafana stack with a provisioned activity dashboard |
+| Delivery | Multi-stage Docker build, Render dev/production isolation, and CI-gated development deploys |
+| Quality | Pytest unit/API tests, PostgreSQL integration tests, Playwright browser tests, and full Compose E2E collaboration tests |
+
+## Architecture
+
+```mermaid
+flowchart LR
+    I[Interviewer browser] -->|HTTPS / REST| A
+    C[Candidate browser] -->|invitation token + REST| A
+    subgraph Container[Production Docker container]
+        A[FastAPI application]
+        S[React static build]
+        A --> S
+    end
+    A -->|SQLAlchemy / psycopg| P[(Neon PostgreSQL)]
+    A -.->|OTLP traces + metrics| O[OpenTelemetry collector]
+    O -.-> G[Grafana / Prometheus / Tempo / Loki]
+```
+
+The production image builds the React client with Node 22, installs the locked Python environment with `uv`, and serves both the static application and FastAPI API from one Uvicorn process on port `8000`. Keeping the artifact self-contained makes local, CI, and Render execution closely match.
+
+## Run locally
+
+### Full stack with Docker Compose
+
+Prerequisites: Docker Desktop (or another Docker Engine) and ports `8000` and `5432` available.
+
+```sh
+docker compose up --build
+```
+
+Open [http://localhost:8000](http://localhost:8000). PostgreSQL data persists in the `interview-canvas-pgdata` named volume. Stop the stack with:
+
+```sh
+docker compose down
+```
+
+### Application container with SQLite
+
+```sh
+docker build -t ai-interview-canvas:local .
+docker run --name ai-interview-canvas-local -p 8000:8000 \
+  -e DATABASE_URL=sqlite:////app/data/designinterview.db \
+  -v ai-interview-canvas-data:/app/data \
+  ai-interview-canvas:local
+```
+
+The application is available at [http://localhost:8000](http://localhost:8000) and its health check at [http://localhost:8000/health](http://localhost:8000/health).
+
+### Native development
+
+Backend dependencies are managed with [`uv`](https://docs.astral.sh/uv/). Run these in separate terminals:
+
+```powershell
+cd backend
+uv sync
+uv run uvicorn app.main:app --reload
+```
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+The frontend runs at `http://localhost:5173` and calls the API at `http://localhost:8000/api`.
+
+## Test strategy
+
+The CI pipeline deliberately tests at increasing levels of fidelity:
+
+```sh
+# Fast backend API tests
+make test
+
+# Browser tests against a real PostgreSQL service
+cd frontend && npm run test:browser
+
+# API integration tests against the complete Compose stack
+make integration-test
+
+# Multi-browser candidate/interviewer collaboration flow
+make e2e-test
+```
+
+On pushes to `main` and pull requests, GitHub Actions runs backend and frontend jobs in parallel. After both pass, it builds the production Docker topology and executes Compose-backed integration and Playwright E2E tests. Failed E2E runs upload browser artifacts and container logs for diagnosis.
+
+## Observability
+
+The optional local telemetry environment includes an OpenTelemetry Collector, Prometheus, Loki, Tempo, and Grafana. It captures FastAPI request traces, standard HTTP metrics, and domain metrics for interview rooms, active participants, and canvas activity.
+
+```powershell
+docker compose -f observability/compose.yaml up -d
+$env:GIT_COMMIT = git rev-parse HEAD
+docker compose up --build -d
+```
+
+Open Grafana at [http://localhost:3001](http://localhost:3001) and select **AI Interview Canvas / Interview Activity**. See the [observability guide](observability/README.md) for configuration and teardown details.
+
+## Deployment
+
+Two independent Render web services use separate Neon PostgreSQL projects so development data and production data never cross boundaries.
+
+| Environment | Service | Database | Release policy |
 | --- | --- | --- | --- |
-| Production | `ai-interview-canvas` | External Neon production project | Manual deploys only |
-| Development | `ai-interview-canvas-dev` | External Neon development project | Automatic from `main`, after GitHub CI passes |
+| Production | [`ai-interview-canvas`](https://ai-interview-canvas.onrender.com) | Neon production project | Manual, verified commit only |
+| Development | `ai-interview-canvas-dev` | Neon development project | Automatic from `main` after CI passes |
 
-Both services build the root `Dockerfile`, but run on separate Render compute.
-Each service has its own secret `DATABASE_URL` pointing to a different Neon
-project. Never copy either environment's database connection string into the
-other service.
+Both services build the root [`Dockerfile`](Dockerfile), expose port `8000`, and use `/health` for health checks. Production has auto-deploy disabled; releases use **Manual Deploy → Deploy a specific commit** only after that commit passes CI and is verified in development.
 
-### Render configuration
+Required service configuration:
 
-The production service at <https://ai-interview-canvas.onrender.com> must have
-**Auto-Deploy: Off** and retain its production Neon `DATABASE_URL`.
-
-The development service must use:
-
-- Repository: `jmoriwa/ai_interview_canvas`
-- Branch: `main`
-- Runtime: Docker with `./Dockerfile`
-- Instance type: Free
-- Health check path: `/health`
-- `APP_ENV`: `development`
-- `DATABASE_URL`: pooled connection string for the development Neon project
-- Auto-Deploy: After CI Checks Pass
-
-Normal pushes to `main` run GitHub Actions and deploy only to development after
-all checks pass.
-
-Production releases are intentional manual deploys from `ai-interview-canvas`.
-Use **Manual Deploy > Deploy a specific commit** after the chosen commit has
-passed CI and has been verified at the dev URL.
-
-## Prerequisites
-
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or another running Docker Engine)
-- Port `8000` available on your computer
-
-Run all commands below from the repository root, where the `Dockerfile` is located.
-
-## Build the image
-
-```sh
-docker build -t ai-interview-canvas:local .
+```text
+APP_ENV=<development|production>
+DATABASE_URL=<environment-specific pooled Neon connection string>
 ```
 
-The first build downloads the Node, Python, and application dependencies, so it can take a few minutes. Later builds can reuse Docker's cache.
+OpenTelemetry is optional and activates when `OTEL_EXPORTER_OTLP_ENDPOINT` (or signal-specific trace/metric endpoints) is configured.
 
-## Run the container
+## Repository map
 
-Use a Docker named volume to keep the SQLite database when the container is stopped, removed, or replaced:
-
-```sh
-docker run --name ai-interview-canvas-local -p 8000:8000 -e DATABASE_URL=sqlite:////app/data/designinterview.db -v ai-interview-canvas-data:/app/data ai-interview-canvas:local
+```text
+ai_interview_canvas/
+├── backend/           FastAPI application, persistence, telemetry, and tests
+├── frontend/          React application and browser tests
+├── e2e/               Compose-backed multi-browser Playwright tests
+├── observability/     Collector and Grafana/Prometheus/Loki/Tempo stack
+├── docs/              Product and technical specification
+├── openapi.yaml       API contract
+├── Dockerfile         Production multi-stage image
+└── docker-compose.yaml
 ```
 
-Docker requires container names to be unique. If `ai-interview-canvas-local` already exists, stop and remove that container before running the command again:
+## Design decisions
 
-```sh
-docker stop ai-interview-canvas-local
-docker rm ai-interview-canvas-local
-```
+- **Privacy at the API boundary:** interviewer notes and evaluations use authenticated owner-only endpoints; the candidate client does not receive those payloads.
+- **Server-authoritative time:** session timing is derived from persisted start time plus accumulated seconds, preventing browser refreshes or clock drift from resetting the interview.
+- **Conflict-aware synchronization:** canvas writes carry a document version. On a `409`, the client fetches the remote document, merges local changes by element ID, and retries once.
+- **Environment parity:** the same Dockerfile is exercised by CI, local Compose, and Render, reducing deployment-only surprises.
+- **Operational visibility:** application and domain telemetry can be enabled without coupling business logic to a specific monitoring vendor.
 
-These commands remove only the container. Data stored in the `ai-interview-canvas-data` volume remains available to the replacement container.
+---
 
-Open <http://localhost:8000> in a browser. The backend health endpoint is available at <http://localhost:8000/health>.
+<div align="center">
 
-## Local observability
+Built as an end-to-end demonstration of product thinking, full-stack engineering, testing discipline, and production operations.
 
-The optional stack in `observability/` receives OTLP telemetry and provides
-Prometheus, Loki, Tempo, and Grafana. See
-[`observability/README.md`](observability/README.md) for startup instructions.
-
-The `ai-interview-canvas-data` volume stores the application's database outside the container. Reuse the same volume name each time you run a replacement container to retain users, sessions, canvases, notes, and evaluations. Removing the container with `docker rm` does not remove this named volume.
-
-The final argument is the image name (`ai-interview-canvas:local`). A build context such as `.` is accepted by `docker build`, but it cannot be used as the image argument to `docker run`.
-
-The command runs in the foreground so logs remain visible. Press `Ctrl+C` to stop it, then remove the stopped container with:
-
-```sh
-docker rm ai-interview-canvas-local
-```
-
-To run in the background instead:
-
-```sh
-docker run -d --name ai-interview-canvas-local -p 8000:8000 -e DATABASE_URL=sqlite:////app/data/designinterview.db -v ai-interview-canvas-data:/app/data ai-interview-canvas:local
-docker logs -f ai-interview-canvas-local
-```
-
-Stop and remove a background container with:
-
-```sh
-docker stop ai-interview-canvas-local
-docker rm ai-interview-canvas-local
-```
-
-## Rebuild after code changes
-
-The source is copied into the image, so rebuild and recreate the container after changing the application:
-
-```sh
-docker stop ai-interview-canvas-local
-docker rm ai-interview-canvas-local
-docker build -t ai-interview-canvas:local .
-docker run -d --name ai-interview-canvas-local -p 8000:8000 -e DATABASE_URL=sqlite:////app/data/designinterview.db -v ai-interview-canvas-data:/app/data ai-interview-canvas:local
-```
-
-If port `8000` is already in use, map a different host port, for example `-p 8080:8000`, and open <http://localhost:8080>.
-
-To intentionally erase all persisted application data, first remove the container and then remove its named volume:
-
-```sh
-docker volume rm ai-interview-canvas-data
-```
+</div>
